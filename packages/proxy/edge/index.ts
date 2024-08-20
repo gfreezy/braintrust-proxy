@@ -62,9 +62,9 @@ export function getCorsHeaders(
 
   return origin
     ? {
-        "access-control-allow-origin": origin,
-        ...baseCorsHeaders,
-      }
+      "access-control-allow-origin": origin,
+      ...baseCorsHeaders,
+    }
     : {};
 }
 
@@ -243,8 +243,8 @@ export function EdgeProxyV1(opts: ProxyOpts) {
       if (opts.completionsCache) {
         ctx.waitUntil(
           encryptedPut(opts.completionsCache, encryptionKey, key, value, {
-            // 1 week
-            ttl: 60 * 60 * 24 * 7,
+            // 1 year
+            ttl: 60 * 60 * 24 * 365,
           }),
         );
       }
