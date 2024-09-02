@@ -53,14 +53,14 @@ import { MessageParam } from "@anthropic-ai/sdk/resources";
 type CachedData = {
   headers: Record<string, string>;
 } & (
-  | {
+    | {
       // DEPRECATION_NOTICE: This can be removed in a couple weeks since writing (e.g. June 9 2024 onwards)
       body: string;
     }
-  | {
+    | {
       data: string;
     }
-);
+  );
 
 export const CACHE_HEADER = "x-bt-use-cache";
 export const CREDS_CACHE_HEADER = "x-bt-use-creds-cache";
@@ -71,7 +71,7 @@ export const FORMAT_HEADER = "x-bt-stream-fmt";
 export const LEGACY_CACHED_HEADER = "x-cached";
 export const CACHED_HEADER = "x-bt-cached";
 
-const CACHE_MODES = ["auto", "always", "never"] as const;
+const CACHE_MODES = ["always", "auto", "never"] as const;
 
 // Options to control how the cache key is generated.
 export interface CacheKeyOptions {
@@ -399,67 +399,67 @@ export async function proxyV1({
     const eventSourceParser: EventSourceParser | undefined = !isStreaming
       ? undefined
       : createParser((event: ParsedEvent | ReconnectInterval) => {
-          if (
-            ("data" in event &&
-              event.type === "event" &&
-              event.data === "[DONE]") ||
-            // Replicate doesn't send [DONE] but does send a 'done' event
-            // @see https://replicate.com/docs/streaming
-            (event as any).event === "done"
-          ) {
-            return;
-          }
+        if (
+          ("data" in event &&
+            event.type === "event" &&
+            event.data === "[DONE]") ||
+          // Replicate doesn't send [DONE] but does send a 'done' event
+          // @see https://replicate.com/docs/streaming
+          (event as any).event === "done"
+        ) {
+          return;
+        }
 
-          if ("data" in event) {
-            const result = JSON.parse(event.data) as ChatCompletionChunk;
-            if (result) {
-              if (result.usage) {
-                spanLogger.log({
-                  metrics: {
-                    tokens: result.usage.total_tokens,
-                    prompt_tokens: result.usage.prompt_tokens,
-                    completion_tokens: result.usage.completion_tokens,
+        if ("data" in event) {
+          const result = JSON.parse(event.data) as ChatCompletionChunk;
+          if (result) {
+            if (result.usage) {
+              spanLogger.log({
+                metrics: {
+                  tokens: result.usage.total_tokens,
+                  prompt_tokens: result.usage.prompt_tokens,
+                  completion_tokens: result.usage.completion_tokens,
+                },
+              });
+            }
+
+            const choice = result.choices?.[0];
+            const delta = choice?.delta;
+
+            if (!choice || !delta) {
+              return;
+            }
+
+            if (!role && delta.role) {
+              role = delta.role;
+            }
+
+            if (choice.finish_reason) {
+              finish_reason = choice.finish_reason;
+            }
+
+            if (delta.content) {
+              content = (content || "") + delta.content;
+            }
+
+            if (delta.tool_calls) {
+              if (!tool_calls) {
+                tool_calls = [
+                  {
+                    index: 0,
+                    id: delta.tool_calls[0].id,
+                    type: delta.tool_calls[0].type,
+                    function: delta.tool_calls[0].function,
                   },
-                });
-              }
-
-              const choice = result.choices?.[0];
-              const delta = choice?.delta;
-
-              if (!choice || !delta) {
-                return;
-              }
-
-              if (!role && delta.role) {
-                role = delta.role;
-              }
-
-              if (choice.finish_reason) {
-                finish_reason = choice.finish_reason;
-              }
-
-              if (delta.content) {
-                content = (content || "") + delta.content;
-              }
-
-              if (delta.tool_calls) {
-                if (!tool_calls) {
-                  tool_calls = [
-                    {
-                      index: 0,
-                      id: delta.tool_calls[0].id,
-                      type: delta.tool_calls[0].type,
-                      function: delta.tool_calls[0].function,
-                    },
-                  ];
-                } else if (tool_calls[0].function?.arguments) {
-                  tool_calls[0].function.arguments +=
-                    delta.tool_calls[0].function?.arguments ?? "";
-                }
+                ];
+              } else if (tool_calls[0].function?.arguments) {
+                tool_calls[0].function.arguments +=
+                  delta.tool_calls[0].function?.arguments ?? "";
               }
             }
           }
-        });
+        }
+      });
 
     const loggingStream = new TransformStream<Uint8Array, Uint8Array>({
       transform(chunk, controller) {
@@ -901,16 +901,16 @@ async function fetchOpenAI(
     fullURL.toString(),
     method === "POST"
       ? {
-          method,
-          headers,
-          body: isEmpty(bodyData) ? undefined : JSON.stringify(bodyData),
-          keepalive: true,
-        }
+        method,
+        headers,
+        body: isEmpty(bodyData) ? undefined : JSON.stringify(bodyData),
+        keepalive: true,
+      }
       : {
-          method,
-          headers,
-          keepalive: true,
-        },
+        method,
+        headers,
+        keepalive: true,
+      },
   );
 
   return {
@@ -993,12 +993,12 @@ async function fetchAnthropic(
     headers["anthropic-beta"] = "tools-2024-05-16";
     params.tools = openAIToolsToAnthropicTools(
       params.tools ||
-        (params.functions as Array<ChatCompletionCreateParams.Function>).map(
-          (f: any) => ({
-            type: "function",
-            function: f,
-          }),
-        ),
+      (params.functions as Array<ChatCompletionCreateParams.Function>).map(
+        (f: any) => ({
+          type: "function",
+          function: f,
+        }),
+      ),
     );
 
     delete params.functions;
@@ -1111,9 +1111,8 @@ async function fetchGoogle(
 
   const fullURL = new URL(
     EndpointProviderToBaseURL.google! +
-      `/models/${encodeURIComponent(model)}:${
-        streamingMode ? "streamGenerateContent" : "generateContent"
-      }`,
+    `/models/${encodeURIComponent(model)}:${streamingMode ? "streamGenerateContent" : "generateContent"
+    }`,
   );
   fullURL.searchParams.set("key", secret.secret);
   if (streamingMode) {
